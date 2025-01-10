@@ -1,28 +1,27 @@
 import requests
 import json
-from time import gmtime, strftime
+from time import gmtime, strftime, sleep
+import concurrent.futures
 
 output = {}
-output["backend"]=""
-output["Lorem ipsum"]=""
-output["flashy"]=""
 
 def output_logs():
     time = strftime("%Y-%m-%d %H:%M:%S +0000", gmtime())
-    with open("logs/backend_report.log","a") as f:
-        f.write(time+", "+output["backend"]+"\n")
+    for i in output.keys():
+        with open(f"logs/{i}_report.log","a") as f:
+            f.write(time+", "+output[i]+"\n")        
+
+    '''
+
     with open("logs/flashy_report.log","a") as f:
         f.write(time+", "+output["flashy"]+"\n")
     with open("logs/lorem_ipsum_report.log","a") as f:
         f.write(time+", "+output["Lorem ipsum"]+"\n")
-
+    '''
         
 def chk_resp(resp):
     if resp.status_code!=200:
-        for i in output.keys():
-            output[i] = "failed"
-        output_logs()
-        exit(0)
+       raise Exception("Backend")
     return resp
 
 def login(URL,user,password):
@@ -35,10 +34,13 @@ def login(URL,user,password):
 def get_cstat(s,chall_id):
     payload = {"query":"query ($id: ID!) {\n          challenge(id: $id) {\n            isDeployable {\n              instance {\n                hasWebPage\n                isLive\n                isExternal\n                isShared\n                expiryTimestamp\n              }\n            }\n          }\n        }","variables":{"id":chall_id}}
     x = chk_resp(s.post(URL,json=payload))
-    if json.loads(x.text)["data"]["challenge"]["isDeployable"]["instance"]:
-        return True
+    x = json.loads(x.text)["data"]["challenge"]
+    if not x or not x["isDeployable"]:
+        return [False,False]
+    if x["isDeployable"]["instance"] and x["isDeployable"]["instance"]["isLive"]:
+        return [True,True]
     else:
-        return False
+        return [True,False]
 
 # Check if challenge has instance first
 def get_challs(s):
@@ -64,12 +66,62 @@ def kill(s,id):
     payload = {"query":"mutation ($id: ID!){\n        terminateDeployment(challengeID: $id)\n      }","variables":{"id":id}}
     chk_resp(s.post(URL,json=payload))
 
-URL="https://syfctf.eng.run/api/graphql/"
-user="admin"
-password="!nex#qJb*EG6dx"
+
+def chk_chall(s,id,name):
+    result = "success"
+    try:
+        res = get_cstat(s,id)
+        if res[0]:
+            if res[1]:
+                kill(s,id)
+            deploy(s,id)
+            tries = 0
+            # TODO: should be 60
+            while tries<10:
+                if get_cstat(s,id)[1]:
+                    break
+                tries += 5
+                sleep(5)
+            if not get_cstat(s,id)[1]:
+                result="failed"
+            kill(s,id)
+            result="success"
+        else:
+            result="invalid"
+    except:
+        result = "failed"
+        output["backend"] = "failed"
+    return result
+
+    
+URL="https://synchrony.eng.run/api/graphql/"
+user="statuscheckuser"
+password="EtfLb4TUgfYx"
 s = login(URL,user,password)
- 
+
 challs = get_challs(s)
+
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=15)
+futures = {}
+for i in challs:
+    id = i["id"]
+    name = i["name"]
+    print(id,name)
+    future = executor.submit(chk_chall, s,id,name)
+    futures[future] = id
+
+for future in concurrent.futures.as_completed(futures):
+    if future.result() == "invalid":
+        continue
+    for i in challs:
+        if futures[future] == i["id"]:
+            output[i["name"]] = future.result()
+            break
+if "backend" not in output.keys():        
+    output["backend"] = "success"
+output_logs()
+    
+'''
 for i in challs:
     id = i["id"]
     name = i["name"]
@@ -85,3 +137,4 @@ for i in challs:
         output[name] = "failed"
 output["backend"] = "success"
 output_logs()
+'''
