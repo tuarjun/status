@@ -1,17 +1,13 @@
 const maxDays = 55;
 
 async function genReportLog(container, key, url) {
-/*
     const response = await fetch("logs/" + key + "_report.log");
 
     let statusLines = "";
   if (response.ok) {
     statusLines = await response.text();
   }
-*/
-
-    let statusLines = "2025-01-10 05:59:53 +0530, success\n2025-01-10 06:02:40 +0530, success\n2025-01-10 06:09:33 +0530, success";
-    
+ 
   const normalized = normalizeData(statusLines);
     console.log(normalized);
   const statusStream = constructStatusStream(key, url, normalized);
@@ -259,7 +255,7 @@ function hideTooltip() {
 }
 
 async function genAllReports() {
-/*
+
   const response = await fetch("urls.cfg");
   const configText = await response.text();
   const configLines = configText.split("\n");
@@ -272,6 +268,6 @@ async function genAllReports() {
 
     await genReportLog(document.getElementById("reports"), key,url);    
   }
-*/
-    await genReportLog(document.getElementById("reports"), "backend","meow");   
+
+    //await genReportLog(document.getElementById("reports"), "backend","meow");   
 }
