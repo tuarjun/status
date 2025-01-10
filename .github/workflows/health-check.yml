@@ -17,6 +17,7 @@ jobs:
       - name: Run python script
         id: shell_script_run
         run: |
+	  bash logrotate.sh
           python3 req.py
           git config --global user.name 'tuarjun'
           git config --global user.email 'tuar@protonmail.com'
