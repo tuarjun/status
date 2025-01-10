@@ -10,14 +10,6 @@ def output_logs():
     for i in output.keys():
         with open(f"logs/{i}_report.log","a") as f:
             f.write(time+", "+output[i]+"\n")        
-
-    '''
-
-    with open("logs/flashy_report.log","a") as f:
-        f.write(time+", "+output["flashy"]+"\n")
-    with open("logs/lorem_ipsum_report.log","a") as f:
-        f.write(time+", "+output["Lorem ipsum"]+"\n")
-    '''
         
 def chk_resp(resp):
     if resp.status_code!=200:
@@ -121,23 +113,3 @@ for future in concurrent.futures.as_completed(futures):
 if "backend" not in output.keys():        
     output["backend"] = "success"
 output_logs()
-
-
-    
-'''
-for i in challs:
-    id = i["id"]
-    name = i["name"]
-    print(id,name)
-    if(get_cstat(s,id)):
-        kill(id)
-    output[name] = "success"
-    deploy(s,id)
-    if(not get_cstat(s,id)):
-        output[name] = "failed"
-    kill(s,id)
-    if(get_cstat(s,id)):
-        output[name] = "failed"
-output["backend"] = "success"
-output_logs()
-'''
