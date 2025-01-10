@@ -76,8 +76,8 @@ def chk_chall(s,id,name):
                 kill(s,id)
             deploy(s,id)
             tries = 0
-            # Tries 60s (1minue) before moving on
-            while tries<5:
+            # Tries 30s (1minue) before moving on
+            while tries<30:
                 if get_cstat(s,id)[1]:
                     break
                 tries += 5
@@ -99,9 +99,9 @@ password="EtfLb4TUgfYx"
 s = login(URL,user,password)
 
 challs = get_challs(s)
-print(chk_chall(s,18,"meow"))
+#print(chk_chall(s,18,"meow"))
 
-'''
+
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=15)
 futures = {}
 for i in challs:
@@ -121,7 +121,7 @@ for future in concurrent.futures.as_completed(futures):
 if "backend" not in output.keys():        
     output["backend"] = "success"
 output_logs()
-'''
+
 
     
 '''
