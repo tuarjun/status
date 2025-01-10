@@ -69,7 +69,7 @@ def chk_chall(s,id,name):
             deploy(s,id)
             tries = 0
             # Tries 60s (1minue) before moving on
-            while tries<60:
+            while tries<120:
                 if get_cstat(s,id)[1]:
                     break
                 tries += 5
