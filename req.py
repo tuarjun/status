@@ -7,7 +7,6 @@ output["backend"]=""
 output["Lorem ipsum"]=""
 output["flashy"]=""
 
-
 def output_logs():
     time = strftime("%Y-%m-%d %H:%M:%S +0000", gmtime())
     with open("logs/backend_report.log","a") as f:
