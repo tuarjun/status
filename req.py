@@ -164,7 +164,7 @@ if "backend" not in output.keys():
 
         html = li_insert(html,"Down Challenges",str(len(down_names)))
 
-        idx = html.find("</div>")
+        idx = html.find("</body>")
         html_pre = html[:idx]
         html_post = html[idx:]
 

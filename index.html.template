@@ -21,9 +21,7 @@
       }
     </style>
   </head>
-
   <body>
-    <div class="pageContainer">
       <h1>Traboda Arena System Status</h1>
       <h2>System Status:</h2>
       <h2>General Statistics</h2>
@@ -43,6 +41,5 @@
       <li>Current Total Submissions:</li>
       <li>Current Running Instances:</li>
       </ul>
-    </div>
   </body>
 </html>
