@@ -118,7 +118,9 @@ with open(f"index.html.template","r") as f:
 
 checktime = strftime("%Y-%m-%d %H:%M:%S +0530", localtime())
 html = li_insert(html,"Last Checked",checktime)
-html = li_insert(html,"Instance URL",URL)
+url_real = URL[:URL.find("/api")]
+url_real = "<a href=\""+url_real+"\">"+url_real+"</a>"
+html = li_insert(html,"Instance URL",url_real)
 
 challs = {}
 try:
