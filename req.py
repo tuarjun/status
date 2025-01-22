@@ -151,10 +151,7 @@ for future in concurrent.futures.as_completed(futures):
         if futures[future] == i["id"]:
             output[i["name"]] = future.result()
             break
-if "backend" not in output.keys():
-    #test
-    output["Spider Quiz"] = "asdsad"
-    
+if "backend" not in output.keys():    
     html = li_insert(html,"Backend","UP")
     if any([output[i]!="success" for i in output]):
         html = li_insert(html,"System Status","Deployment DOWN")
