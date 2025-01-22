@@ -173,7 +173,8 @@ if "backend" not in output.keys():
         html_pre += "</ul>\n"
 
         html = html_pre + html_post
-    else:   
+    else:
+        html = li_insert(html,"System Status","UP")
         html = li_insert(html,"Down Challenges","0")
         
 else:
