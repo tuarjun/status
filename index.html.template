@@ -1,0 +1,48 @@
+<html>
+  <head>
+    <title>Status Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html {
+        max-width: 75ch;
+        padding: 3em 1em;
+        margin: auto;
+        line-height: 1.75;
+        font-family: sans-serif;
+        color: rgba(255, 255, 255, 0.8);
+        background-color: #121212;
+      }      
+      a {
+          color: #bb86fc;
+      }      
+      pre {
+          border-left: 2px solid #03dac5;
+          padding: 6px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="pageContainer">
+      <h1>Traboda Arena System Status</h1>
+      <h2>System Status:</h2>
+      <h2>General Statistics</h2>
+      <ul>
+      <li>Instance URL:</li>
+      <li>Last Checked:</li>
+      <li>Backend:</li>
+      <li>Total Challenges:</li>
+      <li>Down Challenges:</li>
+      </ul>
+      <h2>Contest Statistics</h2>
+      <ul>
+      <li>Start Time:</li>
+      <li>End Time:</li>
+      <li>Total Registered Teams:</li>
+      <li>Total Registered Users:</li>
+      <li>Current Total Submissions:</li>
+      <li>Current Running Instances:</li>
+      </ul>
+    </div>
+  </body>
+</html>

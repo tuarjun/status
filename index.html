@@ -5,45 +5,33 @@
     <link rel="stylesheet" href="index.css" />
     <script src="index.js"></script>
   </head>
+
   <body>
     <div class="pageContainer">
-      <div class="headline">
-        <img src="logo.svg" alt="Logo" width="200px" />
-        <span> System Status </span>
-      </div>
-      <div id="reports" class="reportContainer"></div>
-      <div id="tooltip" class="tooltip" style="opacity: 0">
-        <div id="tooltipArrow" class="tooltipArrow"></div>
-        <div id="tooltipDateTime" class="tooltipDateTime"></div>
-        <div id="tooltipStatus" class="tooltipStatus"></div>
-        <hr />
-        <div id="tooltipDescription" class="tooltipDescription"></div>
-      </div>
-      <div id="templates" style="display: none">
-        <div
-          id="statusSquareTemplate"
-          class="statusSquare $color"
-          data-status="$color"
-        ></div>
-        <div id="statusLineTemplate" class="statusLine"></div>
-        <div
-          id="statusStreamContainerTemplate"
-          class="statusStreamContainer"
-        ></div>
-        <div id="statusContainerTemplate" class="statusContainer">
-          <div class="statusHeader">
-            <h6 class="statusTitle">$title&nbsp;</h6>
-            <div class="$color statusHeadline">$status</div>
-          </div>
-          <div class="statusSubtitle">
-            <div class="sectionUrl"><a href="$url">$url</a></div>
-            <div class="statusUptime">$upTime in the last 12 hours</div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <h1>Traboda Arena System Status</h1>
+      <h2>System Status: Challenge DOWN</h2>
+      <h2>General Statistics</h2>
+      <ul>
+      <li>Instance URL: https://hackathon.dsci.in/api/graphql/</li>
+      <li>Last Checked: 2025-01-22 19:03:31 +0530</li>
+      <li>Backend: UP</li>
+      <li>Total Challenges: 6</li>
+      <li>Down Challenges: 1</li>
+      </ul>
+      <h2>Contest Statistics</h2>
+      <ul>
+      <li>Start Time: 2025-01-28T08:00:00+05:30</li>
+      <li>End Time: 2025-01-28T20:00:00+05:30</li>
+      <li>Total Registered Teams: 769</li>
+      <li>Total Registered Users: 1399</li>
+      <li>Current Total Submissions: 0</li>
+      <li>Current Running Instances: 0</li>
+      </ul>
+    <h2>Down Challenges</h2>
+<ul>
+<li>Spider Quiz</li>
+</ul>
+</div>
   </body>
-  <script>
-    genAllReports();
-  </script>
 </html>
+

@@ -1,15 +1,10 @@
 import requests
 import json
-from time import gmtime, strftime, sleep
+from time import gmtime, strftime, sleep, localtime
 import concurrent.futures
 
-output = {}
 
-def output_logs():
-    time = strftime("%Y-%m-%d %H:%M:%S +0000", gmtime())
-    for i in output.keys():
-        with open(f"logs/{i}_report.log","a") as f:
-            f.write(time+", "+output[i]+"\n")        
+
         
 def chk_resp(resp):
     if resp.status_code!=200:
@@ -23,10 +18,31 @@ def login(URL,user,password):
     return s
 
 
+
+def contest_stats(s):
+    payload = {"query":"query {contentStats \nprofile:me {\n    id\n    name\n    username\n    team { id }\n    type\n    avatarID\n    avatarURL\n    preferDarkTheme\n    contestant{\n      id\n      score {\n        rank\n        points\n        flagsSubmitted\n      }\n    }\n    permissions {\n        viewAdminPanel\n    }\n} \nproperties: contest {\n    name\n    platformMode\n    startTimestamp\n    endTimestamp\n    isFrozen\n    isPaused\n    lockProfile\n    captchaConfig {\n      siteKey\n      provider\n    }\n    virtualDeskGroups {\n      name\n      nodeGroupID\n    }\n    isAcceptingRegistrations\n    googleAnalyticsTrackingID\n    footerMenu\n    allowTeams\n    allowIndividuals\n    allowedChallengeModes\n    styling {\n        lightLogoURL\n        colorLogoURL\n        iconURL\n        defaultTheme\n        disableThemeSwitching\n        customCSS\n        customHeadHTML\n        customFooterHTML\n        hideTrabodaBranding\n        darkTheme {\n            text\n            background\n            primary\n            secondary\n        }\n        lightTheme {\n            text\n            background\n            primary\n            secondary\n        }\n        footer {\n          copyrightText\n          socialLinks {\n            label\n            url\n          }\n        }\n    }\n    permissions {\n      can {\n        manage\n        viewChallenges\n        viewScoreboard\n        viewNotices\n        viewProfiles\n        viewAnalytics\n        viewSubmissions\n        viewSettings\n        viewTeams\n        viewUsers\n        viewLogs\n        viewRoles\n        register\n        manage\n      }\n    }\n    scoring {\n        filters\n        searchEnabled\n        headerGraph\n    }\n    contestantConfig{\n      affiliationLabel\n    }\n    privacyConfig {\n        showCookieBanner\n        consentText\n    }\n    securityConfig{\n        minimumPasswordLength\n        passwordShouldContain\n    }\n}}","variables":{}}
+    x = chk_resp(s.post(URL,json=payload))
+    x = json.loads(x.text)
+    y = x["data"]["contentStats"]
+    ret = {}
+    keys = {"Total Challenges":"challenges","Total Registered Teams":"teams","Total Registered Users":"users","Current Total Submissions":"flag_submissions","Current Running Instances":"instances"}
+    for i in keys.keys():
+        ret[i] = y[keys[i]]
+
+    keys = {"Start Time":"startTimestamp","End Time":"endTimestamp"}
+    y = x["data"]["properties"]
+    for i in keys.keys():
+        ret[i] = y[keys[i]]
+    return ret
+
+
+
+
 def get_cstat(s,chall_id):
     payload = {"query":"query ($id: ID!) {\n          challenge(id: $id) {\n            isDeployable {\n              instance {\n                hasWebPage\n                isLive\n                isExternal\n                isShared\n                expiryTimestamp\n              }\n            }\n          }\n        }","variables":{"id":chall_id}}
     x = chk_resp(s.post(URL,json=payload))
     x = json.loads(x.text)["data"]["challenge"]
+    
     if not x or not x["isDeployable"]:
         return [False,False]
     if x["isDeployable"]["instance"] and x["isDeployable"]["instance"]["isLive"]:
@@ -84,22 +100,47 @@ def chk_chall(s,id,name):
         output["backend"] = "failed"
     return result
 
-    
-URL="https://synchrony.eng.run/api/graphql/"
-user="statuscheckuser"
-password="EtfLb4TUgfYx"
-s = login(URL,user,password)
 
-challs = get_challs(s)
-#print(chk_chall(s,18,"meow"))
+def li_insert(html,key,value):
+    key = key+":"
+    idx = html.find(key)
+    idx += len(key)
+    html = html[:idx] +" "+ value + html[idx:]
+    return html
 
+URL="https://hackathon.dsci.in/api/graphql/"
+user="adminadmin"
+password="adminiswrong"
+
+html = []    
+with open(f"index.html.template","r") as f:
+    html = f.read()
+
+checktime = strftime("%Y-%m-%d %H:%M:%S +0530", localtime())
+html = li_insert(html,"Last Checked",checktime)
+html = li_insert(html,"Instance URL",URL)
+
+challs = {}
+try:
+    s = login(URL,user,password)
+    stats = contest_stats(s)
+
+    for i in stats.keys():
+        html = li_insert(html,i,str(stats[i]))
+    challs = get_challs(s)    
+except Exception as ex:
+    html = li_insert(html,"System Status","Backend DOWN")
+    html = li_insert(html,"Backend","DOWN")
+
+
+output = {}
 
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=15)
 futures = {}
 for i in challs:
     id = i["id"]
     name = i["name"]
-    print(id,name)
+
     future = executor.submit(chk_chall, s,id,name)
     futures[future] = id
 
@@ -110,6 +151,38 @@ for future in concurrent.futures.as_completed(futures):
         if futures[future] == i["id"]:
             output[i["name"]] = future.result()
             break
-if "backend" not in output.keys():        
-    output["backend"] = "success"
-output_logs()
+if "backend" not in output.keys():
+    #test
+    output["Spider Quiz"] = "asdsad"
+    
+    html = li_insert(html,"Backend","UP")
+    if any([output[i]!="success" for i in output]):
+        html = li_insert(html,"System Status","Deployment DOWN")
+        down_names = []
+        for i in output:
+            if output[i]!="success":
+                down_names.append(i)
+
+        html = li_insert(html,"Down Challenges",str(len(down_names)))
+
+        idx = html.find("</div>")
+        html_pre = html[:idx]
+        html_post = html[idx:]
+
+        html_pre += "<h2>Down Challenges</h2>\n"
+        html_pre += "<ul>\n"
+        for i in down_names:
+            html_pre += "<li>"+i+"</li>\n"
+        html_pre += "</ul>\n"
+
+        html = html_pre + html_post
+    else:   
+        html = li_insert(html,"Down Challenges","0")
+        
+else:
+    html = li_insert(html,"System Status","Backend DOWN")
+    html = li_insert(html,"Backend","DOWN")
+    del output["backend"]
+
+print(html)
+
