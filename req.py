@@ -1,8 +1,8 @@
 import requests
 import json
-from time import gmtime, strftime, sleep, localtime
+from time import gmtime, strftime, sleep, localtime, tzset
 import concurrent.futures
-
+import os
 
 
         
@@ -116,6 +116,8 @@ html = []
 with open(f"index.html.template","r") as f:
     html = f.read()
 
+os.environ['TZ'] = "Asia/Kolkata"
+tzset()
 checktime = strftime("%Y-%m-%d %H:%M:%S +0530", localtime())
 html = li_insert(html,"Last Checked",checktime)
 url_real = URL[:URL.find("/api")]
