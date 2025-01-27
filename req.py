@@ -139,7 +139,7 @@ try:
 except Exception as ex:
     html = li_insert(html,"System Status","Backend DOWN")
     html = li_insert(html,"Backend","DOWN")
-
+    subprocess.run(["./tel_send.sh",tel_msg])
 
 output = {}
 
@@ -181,6 +181,8 @@ if "backend" not in output.keys():
         html_pre += "</ul>\n"
 
         html = html_pre + html_post
+
+        subprocess.run(["./tel_send.sh",tel_msg])
     else:
         html = li_insert(html,"System Status","UP")
         html = li_insert(html,"Down Challenges","0")
@@ -188,7 +190,7 @@ if "backend" not in output.keys():
 else:
     html = li_insert(html,"System Status","Backend DOWN")
     html = li_insert(html,"Backend","DOWN")
+    subprocess.run(["./tel_send.sh",tel_msg])
     del output["backend"]
 
 print(html)
-subprocess.run(["./tel_send.sh",tel_msg])
