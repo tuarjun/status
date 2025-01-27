@@ -3,7 +3,7 @@ import json
 from time import gmtime, strftime, sleep, localtime, tzset
 import concurrent.futures
 import os
-
+import subprocess
 
         
 def chk_resp(resp):
@@ -100,8 +100,10 @@ def chk_chall(s,id,name):
         output["backend"] = "failed"
     return result
 
-
+tel_msg = ""
 def li_insert(html,key,value):
+    global tel_msg
+    tel_msg += key+":"+value+"\n"
     key = key+":"
     idx = html.find(key)
     idx += len(key)
@@ -113,6 +115,8 @@ user="adminadmin"
 password="adminiswrong"
 
 html = []    
+
+
 with open(f"index.html.template","r") as f:
     html = f.read()
 
@@ -121,7 +125,7 @@ tzset()
 checktime = strftime("%Y-%m-%d %H:%M:%S +0530", localtime())
 html = li_insert(html,"Last Checked",checktime)
 url_real = URL[:URL.find("/api")]
-url_real = "<a href=\""+url_real+"\">"+url_real+"</a>"
+#url_real = "<a href=\""+url_real+"\">"+url_real+"</a>"
 html = li_insert(html,"Instance URL",url_real)
 
 challs = {}
@@ -187,4 +191,4 @@ else:
     del output["backend"]
 
 print(html)
-
+subprocess.run(["./tel_send.sh",tel_msg])
