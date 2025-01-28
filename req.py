@@ -8,7 +8,7 @@ import socket
 from contextlib import closing
         
 def chk_resp(s,URL,payload):
-    resp = s.post(URL,json=payload,timeout=10)
+    resp = s.post(URL,json=payload,timeout=5)
     if resp.status_code!=200:
        raise Exception("Backend")
     return resp
@@ -92,7 +92,7 @@ def get_ext(s,id):
 def check_socket(host, port):
     try:
         with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-            sock.settimeout(10)
+            sock.settimeout(5)
             return sock.connect_ex((str(host), int(port))) == 0
     except:
         return False
