@@ -4,7 +4,8 @@ from time import gmtime, strftime, sleep, localtime, tzset
 import concurrent.futures
 import os
 import subprocess
-
+import socket
+from contextlib import closing
         
 def chk_resp(resp):
     if resp.status_code!=200:
@@ -39,16 +40,22 @@ def contest_stats(s):
 
 
 def get_cstat(s,chall_id):
+    res={"isdepl":False,"external":False,"live":False,"web":False}
     payload = {"query":"query ($id: ID!) {\n          challenge(id: $id) {\n            isDeployable {\n              instance {\n                hasWebPage\n                isLive\n                isExternal\n                isShared\n                expiryTimestamp\n              }\n            }\n          }\n        }","variables":{"id":chall_id}}
     x = chk_resp(s.post(URL,json=payload))
     x = json.loads(x.text)["data"]["challenge"]
-    
     if not x or not x["isDeployable"]:
-        return [False,False]
-    if x["isDeployable"]["instance"] and x["isDeployable"]["instance"]["isLive"]:
-        return [True,True]
-    else:
-        return [True,False]
+        return res
+    res["isdepl"] = True
+    if x["isDeployable"]["instance"]:
+        if x["isDeployable"]["instance"]["isLive"]:
+            res["live"] = True
+        if x["isDeployable"]["instance"]["hasWebPage"]:
+            res["web"] = True
+        if x["isDeployable"]["instance"]["isExternal"]:
+            res["external"] = True
+
+    return res   
 
 # Check if challenge has instance first
 def get_challs(s):
@@ -74,25 +81,59 @@ def kill(s,id):
     payload = {"query":"mutation ($id: ID!){\n        terminateDeployment(challengeID: $id)\n      }","variables":{"id":id}}
     chk_resp(s.post(URL,json=payload))
 
+# Handle Web external
+def get_ext(s,id):
+    payload = {"query":"query ($id: ID!){\n        getDeploymentUrl(challengeID: $id){\n          url\n          port\n          host\n        }\n      }","variables":{"id":id}}
+    x = chk_resp(s.post(URL,json=payload))
+    x = json.loads(x.text)
+    return x["data"]["getDeploymentUrl"]["url"]
+
+def check_socket(host, port):
+    try:
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+            return sock.connect_ex((str(host), int(port))) == 0
+    except:
+        return False
+
+def chk_depl(url):
+    if "https" in url:
+        url = url.split("/")[2]
+        url = url.split(":")
+        if len(url)==2:
+            return(check_socket(url[0],url[1]))
+        else:
+            return(check_socket(url[0],443))
+    else:
+        url = url.split(" ")
+        return check_socket(url[0],url[1])
 
 def chk_chall(s,id,name):
     result = "success"
     try:
         res = get_cstat(s,id)
-        if res[0]:
-            if res[1]:
+        if res["isdepl"]:
+            if res["external"]:
+                url = get_ext(s,id)
+                if not chk_depl(url):
+                    result = "failed"
+            else:
+                if res["live"]:
+                    kill(s,id)
+                deploy(s,id)
+                tries = 0
+                # Tries 60s (1minue) before moving on
+                while tries<120:
+                    if get_cstat(s,id)["live"]:
+                        break
+                    tries += 5
+                    sleep(5)
+                if not get_cstat(s,id)["live"]:
+                    result="failed"
+                else:
+                    url = get_ext(s,id)
+                    if not chk_depl(url):
+                        result = "failed"
                 kill(s,id)
-            deploy(s,id)
-            tries = 0
-            # Tries 60s (1minue) before moving on
-            while tries<120:
-                if get_cstat(s,id)[1]:
-                    break
-                tries += 5
-                sleep(5)
-            if not get_cstat(s,id)[1]:
-                result="failed"
-            kill(s,id)
         else:
             result="invalid"
     except:
