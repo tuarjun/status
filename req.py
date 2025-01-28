@@ -7,7 +7,8 @@ import subprocess
 import socket
 from contextlib import closing
         
-def chk_resp(resp):
+def chk_resp(s,URL,payload):
+    resp = s.post(URL,json=payload,timeout=10)
     if resp.status_code!=200:
        raise Exception("Backend")
     return resp
@@ -15,14 +16,14 @@ def chk_resp(resp):
 def login(URL,user,password):
     s = requests.Session()
     payload = { "query": "mutation ($username: String!, $password: String!, $token: String) {\n              login(username: $username, password: $password, token: $token) {\n                  id\n                  username\n                  name\n                  type\n              }\n            }","variables": { "username": user,"password":password ,"token": None,},}
-    chk_resp(s.post(URL,json=payload))
+    chk_resp(s,URL,payload)
     return s
 
 
 
 def contest_stats(s):
     payload = {"query":"query {contentStats \nprofile:me {\n    id\n    name\n    username\n    team { id }\n    type\n    avatarID\n    avatarURL\n    preferDarkTheme\n    contestant{\n      id\n      score {\n        rank\n        points\n        flagsSubmitted\n      }\n    }\n    permissions {\n        viewAdminPanel\n    }\n} \nproperties: contest {\n    name\n    platformMode\n    startTimestamp\n    endTimestamp\n    isFrozen\n    isPaused\n    lockProfile\n    captchaConfig {\n      siteKey\n      provider\n    }\n    virtualDeskGroups {\n      name\n      nodeGroupID\n    }\n    isAcceptingRegistrations\n    googleAnalyticsTrackingID\n    footerMenu\n    allowTeams\n    allowIndividuals\n    allowedChallengeModes\n    styling {\n        lightLogoURL\n        colorLogoURL\n        iconURL\n        defaultTheme\n        disableThemeSwitching\n        customCSS\n        customHeadHTML\n        customFooterHTML\n        hideTrabodaBranding\n        darkTheme {\n            text\n            background\n            primary\n            secondary\n        }\n        lightTheme {\n            text\n            background\n            primary\n            secondary\n        }\n        footer {\n          copyrightText\n          socialLinks {\n            label\n            url\n          }\n        }\n    }\n    permissions {\n      can {\n        manage\n        viewChallenges\n        viewScoreboard\n        viewNotices\n        viewProfiles\n        viewAnalytics\n        viewSubmissions\n        viewSettings\n        viewTeams\n        viewUsers\n        viewLogs\n        viewRoles\n        register\n        manage\n      }\n    }\n    scoring {\n        filters\n        searchEnabled\n        headerGraph\n    }\n    contestantConfig{\n      affiliationLabel\n    }\n    privacyConfig {\n        showCookieBanner\n        consentText\n    }\n    securityConfig{\n        minimumPasswordLength\n        passwordShouldContain\n    }\n}}","variables":{}}
-    x = chk_resp(s.post(URL,json=payload))
+    x = chk_resp(s,URL,payload)
     x = json.loads(x.text)
     y = x["data"]["contentStats"]
     ret = {}
@@ -42,7 +43,7 @@ def contest_stats(s):
 def get_cstat(s,chall_id):
     res={"isdepl":False,"external":False,"live":False,"web":False}
     payload = {"query":"query ($id: ID!) {\n          challenge(id: $id) {\n            isDeployable {\n              instance {\n                hasWebPage\n                isLive\n                isExternal\n                isShared\n                expiryTimestamp\n              }\n            }\n          }\n        }","variables":{"id":chall_id}}
-    x = chk_resp(s.post(URL,json=payload))
+    x = chk_resp(s,URL,payload)
     x = json.loads(x.text)["data"]["challenge"]
     if not x or not x["isDeployable"]:
         return res
@@ -60,7 +61,7 @@ def get_cstat(s,chall_id):
 # Check if challenge has instance first
 def get_challs(s):
     pay_chall={"query":"query($keyword: String){\n                      contest{\n                          privateProperties{\n                              challenges(keyword: $keyword){\n                                   challenge{\n                                      value: id\n                                      label: name\n                                   }\n                              }\n                          }\n                      }\n                  }","variables":{"keyword":""}}
-    x = chk_resp(s.post(URL,json=pay_chall))
+    x = chk_resp(s,URL,pay_chall)
     challs = json.loads(x.text)
     challs = challs["data"]["contest"]["privateProperties"]["challenges"]
 
@@ -75,22 +76,23 @@ def get_challs(s):
 
 def deploy(s,id):
     payload = {"query":"mutation ($id: ID!){\n        spawnDeployment(challengeID: $id)\n      }","variables":{"id":id}}
-    chk_resp(s.post(URL,json=payload))
+    chk_resp(s,URL,payload)
 
 def kill(s,id):
     payload = {"query":"mutation ($id: ID!){\n        terminateDeployment(challengeID: $id)\n      }","variables":{"id":id}}
-    chk_resp(s.post(URL,json=payload))
+    chk_resp(s,URL,payload)
 
 # Handle Web external
 def get_ext(s,id):
     payload = {"query":"query ($id: ID!){\n        getDeploymentUrl(challengeID: $id){\n          url\n          port\n          host\n        }\n      }","variables":{"id":id}}
-    x = chk_resp(s.post(URL,json=payload))
+    x = chk_resp(s,URL,payload)
     x = json.loads(x.text)
     return x["data"]["getDeploymentUrl"]["url"]
 
 def check_socket(host, port):
     try:
         with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+            sock.settimeout(10)
             return sock.connect_ex((str(host), int(port))) == 0
     except:
         return False
